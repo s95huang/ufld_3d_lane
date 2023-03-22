@@ -1,0 +1,30 @@
+# files
+*.pcd
+*.las
+*.osm
+*.bag
+*.onnx
+*.weights
+*.zip
+*.pyc
+build.gradle
+.catkin_workspace
+.catkin_tools
+*.engine
+*.prototxt
+*.caffemodel
+*.pth
+
+# IDE
+.vscode
+.idea
+.pyc
+
+# cmake or colcon
+build/
+devel/
+install/
+logs/
+log/
+**/build
+**/devel
