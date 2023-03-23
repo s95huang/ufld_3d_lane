@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>lane_detection_msgs</name>
+  <version>0.0.0</version>
+  <description>ROS message definitions of Lane Detection Algorithm.</description>
+
+  <maintainer email="m3ning@uwaterloo.ca">Minghao Ning</maintainer>
+  <license>none</license>
+  <author email="m3ning@uwaterloo.ca">Minghao Ning</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>message_generation</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+
+  <export>
+    <build_type>catkin</build_type>
+  </export>
+</package>
