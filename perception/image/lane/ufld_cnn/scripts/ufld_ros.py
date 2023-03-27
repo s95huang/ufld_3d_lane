@@ -13,6 +13,8 @@ from ultrafastLaneDetector.ultrafastLaneDetector import UltrafastLaneDetector
 import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+from lane_detection_msgs.msg import CNNLaneDetectionMsg # mvsl lane detection msg
+from loopx_lane_detection_msgs.msg import lane_2d, lane_2d_array # loopx lane detection msg
 
 class ufld_v1_ros:
     def __init__(self):
@@ -21,16 +23,25 @@ class ufld_v1_ros:
         input_img_topic = rospy.get_param('~input_image_topic', '/camera/color/image_raw')
         # output visualization topic
         output_visu_topic = rospy.get_param('~output_image_topic', '/lane_2d/visual')
-        output_lane_msg_topic = rospy.get_param('~output_lane_2d_topic', '/lane_2d/lane_msg')
+        mvsl_lane_output_topic = rospy.get_param('~mvsl_lane_output_topic', '/lane_2d/lane_msg')
+        loopx_lane_output_topic = rospy.get_param('~loopx_lane_output_topic', '/lane_2d/lane_msg')
 
-        
+        # By default, lane detection results are published using both lane_detection_msgs and loopx_lane_detection_msgs
+        use_mvsl_msg = rospy.get_param('~use_mvsl_msg', True) # True for mvsl lane detection msg
+        use_loopx_msg = rospy.get_param('~use_loopx_msg', True) # True for loopx lane detection msg
+
         self.image_sub = rospy.Subscriber(input_img_topic,Image,self.callback,queue_size=10)
         self.pub_visu = rospy.Publisher(output_visu_topic,Image,queue_size=10)
-        self.lane_msg_pub = rospy.Publisher(output_lane_msg_topic,Image,queue_size=10)
         
         use_culane = rospy.get_param('~use_culane', False) # True for CULane, False for TuSimple
         # get model path
         model_path = rospy.get_param('~model_path', 'tusimple_288x800.onnx')
+
+        # set up lane_detection msg publisher
+        if use_mvsl_msg:
+            self.pub_lane_msg = rospy.Publisher(mvsl_lane_output_topic, CNNLaneDetectionMsg, queue_size=10)
+        if use_loopx_msg:
+            self.pub_lane_msg = rospy.Publisher(loopx_lane_output_topic, lane_2d_array, queue_size=10)
                 
         if use_culane:
             file_name = 'culane_288x800.onnx'

@@ -17,8 +17,8 @@
             <param name="model_path" type="str" value="$(arg model_path)"/>
             <param name="input_image_topic" type="str" value="/camera/color/image_raw"/>
             <param name="output_image_topic" type="str" value="/ufld/visual"/>
-            <param name="output_lane_2d_topic" type="str" value="/ufld/lane_msg"/>
-      
+            <param name="mvsl_lane_output_topic" type="str" value="/ufld/mvsl/lane_msg"/>
+            <param name="loopx_lane_output_topic" type="str" value="/ufld/loopx/lane_msg"/>
             <!-- <param name="lane_det_threshold" type="double" value="$(arg lane_det_threshold)"/> -->
       
           
