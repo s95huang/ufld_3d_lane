@@ -1,0 +1,30 @@
+<launch>
+    <group ns="ufld">
+        <arg name="rosbag_testing" default="true"/>
+        <arg name="use_lane_ufld" default="true"/> 
+
+
+        <arg name="model_path" default="$(find ufld_cnn)/data/tusimple_288x800.onnx"/>
+        <param name="input_image_topic" type="str" value="/camera/color/image_raw"/>
+
+
+
+        <node pkg="image_transport" type="republish" name="republish" args="compressed in:=/pylon_camera_node_center/image_rect raw out:=/camera/color/image_raw" if="$(arg rosbag_testing)"/>
+
+
+
+        <node pkg="ufld_cnn" type="ufld_ros.py" name="ufldv1_ros" output="screen" if="$(arg use_lane_ufld)">
+            <param name="model_path" type="str" value="$(arg model_path)"/>
+            <param name="input_image_topic" type="str" value="/camera/color/image_raw"/>
+            <param name="output_image_topic" type="str" value="/ufld/visual"/>
+            <param name="output_lane_2d_topic" type="str" value="/ufld/lane_msg"/>
+      
+            <!-- <param name="lane_det_threshold" type="double" value="$(arg lane_det_threshold)"/> -->
+      
+          
+          </node>
+
+    </group>
+
+
+</launch>
