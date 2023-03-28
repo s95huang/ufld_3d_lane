@@ -66,9 +66,27 @@ class ufld_v1_ros:
             print(e)
 
         # Detect the lanes
-        output_img = self.lane_detector.AutoDrawLanes(self.frame)
+        # output is network output, output_img is the visualization image with lanes drawn on it
+        output, output_img, lanes_points, lanes_detected, lanes_confidence = self.lane_detector.AutoDrawLanes(self.frame)
+
+        # print("=====================================")
+        # print(lanes_points)
+        # print(lanes_detected)
+
+        # get output dimensions
+        # print(output[0].shape)
+        # (1, 101, 56, 4)
+
+        print(lanes_confidence)
+
 
         self.pub_visu.publish(self.bridge.cv2_to_imgmsg(output_img, "bgr8"))
+
+        # CNNLaneDetectionMsg
+        mvsl_lane_msg = CNNLaneDetectionMsg()
+        # mvsl_lane_msg.header = data.header # copy header from input image, most important is the timestamp
+
+        # get index of the lane 
 
 
 if __name__ == '__main__':

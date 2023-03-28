@@ -278,12 +278,12 @@ class UltrafastLaneDetector():
 		output = self.infer.inference(input_tensor)
 
 		# Process output data
-		self.lanes_points, self.lanes_detected = self.process_output(output, self.cfg)
+		self.lanes_points, self.lanes_detected, lanes_confidence = self.process_output(output, self.cfg)
 
 		# # Draw depth image
 		visualization_img = self.draw_lanes(image, self.lanes_points, self.lanes_detected, self.cfg, draw_points)
 
-		return visualization_img
+		return output, visualization_img, self.lanes_points, self.lanes_detected, lanes_confidence
 
 	def adjust_lanes_points(self, left_lanes_points, right_lanes_points, image_height) :
 		if (len(left_lanes_points[1]) != 0 ) :
@@ -340,38 +340,60 @@ class UltrafastLaneDetector():
 		# print(processed_output.reshape((1,-1)))
 		processed_output = processed_output[:, ::-1, :]
 		prob = scipy.special.softmax(processed_output[:-1, :, :], axis=0)
+		# print("Prob", prob.shape)
+
 		idx = np.arange(cfg.griding_num) + 1
 		idx = idx.reshape(-1, 1, 1)
 		loc = np.sum(prob * idx, axis=0)
+		# print("Loc", loc)
 		processed_output = np.argmax(processed_output, axis=0)
 		loc[processed_output == cfg.griding_num] = 0
 		processed_output = loc
-
+		# print("Processed_output", processed_output)
 
 		col_sample = np.linspace(0, 800 - 1, cfg.griding_num)
 		col_sample_w = col_sample[1] - col_sample[0]
 
 		lanes_points = []
 		lanes_detected = []
+		lanes_confidence = []
 
 		max_lanes = processed_output.shape[1]
 		for lane_num in range(max_lanes):
 			lane_points = []
+			lane_confidence = []
 			# Check if there are any points detected in the lane
-			if np.sum(processed_output[:, lane_num] != 0) > 2:
-
+			# require at least 5 points to draw a lane
+			if np.sum(processed_output[:, lane_num] != 0) > 5:
 				lanes_detected.append(True)
+				# lanes_confidence.append(np.sum(processed_output[:, lane_num] != 0))
+				# print("Lane_confidence: ", lanes_confidence)
 
 				# Process each of the points for each lane
+				# requires at least 50 confidence to draw a point
+
+				# calulate the average confidence of the lane points,
+
 				for point_num in range(processed_output.shape[0]):
-					if processed_output[point_num, lane_num] > 0:
+					if processed_output[point_num, lane_num] > 50:
+						# print(processed_output[point_num, lane_num])
 						lane_point = [int(processed_output[point_num, lane_num] * col_sample_w * cfg.img_w / 800) - 1, int(cfg.img_h * (cfg.row_anchor[cfg.cls_num_per_lane-1-point_num]/288)) - 1 ]
 						lane_points.append(lane_point)
+						lane_confidence.append(processed_output[point_num, lane_num])
+				# prevent nan value
+				# print("lane_points: ", lane_points)
+				# print("Lane_confidence: ", np.mean(lane_confidence))
+				
 			else:
 				lanes_detected.append(False)
 
 			lanes_points.append(lane_points)
-		return np.array(lanes_points, dtype=object), np.array(lanes_detected, dtype=object)
+			# prevent RuntimeWarning: Mean of empty slice. warning
+			if len(lane_confidence) == 0:
+				lanes_confidence.append(0.0)
+			else:
+				lanes_confidence.append(np.mean(lane_confidence))
+		return np.array(lanes_points, dtype=object), np.array(lanes_detected, dtype=object), np.array(lanes_confidence, dtype=object)
 
 	@staticmethod
 	def draw_lanes(input_img, lanes_points, lanes_detected, cfg, draw_points=True):
@@ -382,8 +404,8 @@ class UltrafastLaneDetector():
 		if(lanes_detected[1] and lanes_detected[2]):
 			lane_segment_img = visualization_img.copy()
 			
-			cv2.fillPoly(lane_segment_img, pts = [np.vstack((lanes_points[1],np.flipud(lanes_points[2])))], color =(255,191,0))
-			visualization_img = cv2.addWeighted(visualization_img, 0.7, lane_segment_img, 0.3, 0)
+			# cv2.fillPoly(lane_segment_img, pts = [np.vstack((lanes_points[1],np.flipud(lanes_points[2])))], color =(255,191,0))
+			# visualization_img = cv2.addWeighted(visualization_img, 0.7, lane_segment_img, 0.3, 0)
 
 		if(draw_points):
 			for lane_num,lane_points in enumerate(lanes_points):
